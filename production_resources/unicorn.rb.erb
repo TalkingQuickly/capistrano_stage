@@ -1,0 +1,38 @@
+root = "/home/deploy/apps/<%= application %>/current"
+working_directory root
+pid "#{root}/tmp/pids/unicorn.pid"
+stderr_path "#{root}/log/unicorn.log"
+stdout_path "#{root}/log/unicorn.log"
+
+# where should the unicorn process listen. Must match what's defined
+# in nginx.conf.erb
+listen "/tmp/unicorn.<%= application %>.sock"
+
+# how many worker processes to spawn. One per server core is a good
+# guideline.
+worker_processes 1
+timeout 40
+
+# whether to prelaod the app and then fork or laod the app individually
+# for each worker process. Must be true for zero downtime deployments
+# to work.
+preload_app true
+
+before_fork do |server, worker|
+  # Quit the old unicorn process
+  old_pid = "#{server.config[:pid]}.oldbin"
+  if File.exists?(old_pid) && server.pid != old_pid
+    begin
+      Process.kill("QUIT", File.read(old_pid).to_i)
+    rescue Errno::ENOENT, Errno::ESRCH
+      puts "unicorn master already killed"
+    end
+  end
+end
+
+after_fork do |server, worker|
+  port = 5000 + worker.nr
+
+  child_pid = server.config[:pid].sub('.pid', ".#{port}.pid")
+  system("echo #{Process.pid} > #{child_pid}")
+end
