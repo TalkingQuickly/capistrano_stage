@@ -1,25 +1,33 @@
 require "bundler/capistrano"
 
-server "client-rails-1", :web, :app, :db, primary: true
+# this should be the the server address or ip you'll be deploying to
+server "your-ip-address", :web, :app, :db, primary: true
 
 # set RAILS_ENV
 set :rails_env, :production
 
-# this allows you to create descriptive subsets of environment e.g.
-# london, daily-london china etc which tell you which version of this
-# environment you're working in. 
+# the name of your application
+set :application_name, "your_application_name"
 
-set :application_name, "your_app_name"
-set :application_domain, "domain.example.com"
+# the domain you'll be deploying your application to
+set :application_domain, "domain_your_deploying_to"
+
+# your application name which is used in file paths is a combination
+# of the application name and the rails environment
 set :application, "#{application_name}_#{rails_env}"
 
+# the user to deploy as
 set :user, "deploy"
+
+# the directory to deploy to
 set :deploy_to, "/home/#{user}/apps/#{application}"
 set :deploy_via, :remote_cache
 set :use_sudo, false
 
+# the details of the source control where the codebase should be
+# retrieved from from
 set :scm, "git"
-set :repository, "your_github_hepo"
+set :repository, "your-git-repo"
 set :branch, "master"
 
 # make sure rbenv ruby is available
@@ -57,11 +65,11 @@ namespace :deploy do
     # copy them to the shared directory
 
     # create a nginx virtual host
-    template "config/deploy/#{application}_resources/nginx.conf.erb", "#{shared_path}/config/nginx.conf"
+    template "config/deploy/#{rails_env}_resources/nginx.conf.erb", "#{shared_path}/config/nginx.conf"
     # define a control script for this applications unicorn workers
-    template "config/deploy/#{application}_resources/unicorn_init.sh.erb", "#{shared_path}/config/unicorn_init.sh"
+    template "config/deploy/#{rails_env}_resources/unicorn_init.sh.erb", "#{shared_path}/config/unicorn_init.sh"
     # define this applications unicorn configuration
-    template "config/deploy/#{application}_resources/unicorn.rb.erb", "#{shared_path}/config/unicorn.rb"
+    template "config/deploy/#{rails_env}_resources/unicorn.rb.erb", "#{shared_path}/config/unicorn.rb"
 
     # make the unicorn init script executable
     sudo "chmod +x #{shared_path}/config/unicorn_init.sh"
@@ -71,7 +79,7 @@ namespace :deploy do
     sudo "ln -nfs #{shared_path}/config/unicorn_init.sh /etc/init.d/unicorn_#{application}"
 
     # create an example database.yml file
-    put File.read("config/deploy/#{application}_resources/database.sample.yml"), "#{shared_path}/config/database.yml"
+    template "config/deploy/#{rails_env}_resources/database.sample.yml.erb", "#{shared_path}/config/database.yml"
 
     # remind us that these config file need editing
     puts "Now edit the config files in #{shared_path}."
@@ -120,3 +128,4 @@ namespace :assets do
     run_locally "rm -rf public/assets"
   end
 end
+
