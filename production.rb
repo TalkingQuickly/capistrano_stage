@@ -57,11 +57,11 @@ namespace :deploy do
     # copy them to the shared directory
 
     # create a nginx virtual host
-    template "config/deploy/#{rails_env}_#{rails_env_variant}_resources/nginx.conf.erb", "#{shared_path}/config/nginx.conf"
+    template "config/deploy/#{application}_resources/nginx.conf.erb", "#{shared_path}/config/nginx.conf"
     # define a control script for this applications unicorn workers
-    template "config/deploy/#{rails_env}_#{rails_env_variant}_resources/unicorn_init.sh.erb", "#{shared_path}/config/unicorn_init.sh"
+    template "config/deploy/#{application}_resources/unicorn_init.sh.erb", "#{shared_path}/config/unicorn_init.sh"
     # define this applications unicorn configuration
-    template "config/deploy/#{rails_env}_#{rails_env_variant}_resources/unicorn.rb.erb", "#{shared_path}/config/unicorn.rb"
+    template "config/deploy/#{application}_resources/unicorn.rb.erb", "#{shared_path}/config/unicorn.rb"
 
     # make the unicorn init script executable
     sudo "chmod +x #{shared_path}/config/unicorn_init.sh"
@@ -71,7 +71,7 @@ namespace :deploy do
     sudo "ln -nfs #{shared_path}/config/unicorn_init.sh /etc/init.d/unicorn_#{application}"
 
     # create an example database.yml file
-    put File.read("config/database.sample.yml"), "#{shared_path}/config/database.yml"
+    put File.read("config/deploy/#{application}_resources/database.sample.yml"), "#{shared_path}/config/database.yml"
 
     # remind us that these config file need editing
     puts "Now edit the config files in #{shared_path}."
